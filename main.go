@@ -15,6 +15,10 @@ var timeout, _ = strconv.Atoi(os.Getenv("TIMEOUT"))
 var retries, _ = strconv.Atoi(os.Getenv("RETRIES"))
 var port = os.Getenv("PORT")
 
+// Webshare Proxy Credentials
+var webshareUser = os.Getenv("WEBSHARE_USER")
+var websharePass = os.Getenv("WEBSHARE_PASS")
+
 var client *fasthttp.Client
 
 func main() {
@@ -23,7 +27,7 @@ func main() {
 	client = &fasthttp.Client{
 		ReadTimeout:         time.Duration(timeout) * time.Second,
 		MaxIdleConnDuration: 60 * time.Second,
-		Dial:                fasthttpproxy.FasthttpHTTPDialer("http://mpkvgwjp-rotate:65sm7wqm7kr3@p.webshare.io:80"),
+		Dial:                fasthttpproxy.FasthttpHTTPDialer("http://" + webshareUser + ":" + websharePass + "@p.webshare.io:80"),
 	}
 
 	if err := fasthttp.ListenAndServe(":"+port, h); err != nil {
@@ -70,8 +74,9 @@ func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
 	req.Header.SetMethod(string(ctx.Method()))
-	url := strings.SplitN(string(ctx.Request.Header.RequestURI())[1:], "/", 2)
-	req.SetRequestURI("https://" + url[0] + ".roblox.com/" + url[1])
+	// url := strings.SplitN(string(ctx.Request.Header.RequestURI())[1:], "/", 2)
+	// req.SetRequestURI("https://" + url[0] + ".roblox.com/" + url[1])
+	req.SetRequestURI("https://api64.ipify.org?format=json")
 	req.SetBody(ctx.Request.Body())
 	ctx.Request.Header.VisitAll(func(key, value []byte) {
 		req.Header.Set(string(key), string(value))
