@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -73,7 +74,7 @@ func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
 	}
 
 	// Reset the Dial function to force a new proxy connection
-	client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxyURL, time.Duration(timeout)*time.Second)
+	client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxyURL+strconv.Itoa(rand.Intn(100000)), time.Duration(timeout)*time.Second)
 
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
