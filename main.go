@@ -13,6 +13,10 @@ var timeout, _ = strconv.Atoi(os.Getenv("TIMEOUT"))
 var retries, _ = strconv.Atoi(os.Getenv("RETRIES"))
 var port = os.Getenv("PORT")
 
+// Webshare Proxy Credentials
+var webshareUser = os.Getenv("WEBSHARE_USER")
+var websharePass = os.Getenv("WEBSHARE_PASS")
+
 var client *fasthttp.Client
 
 func main() {
@@ -21,6 +25,7 @@ func main() {
 	client = &fasthttp.Client{
 		ReadTimeout: time.Duration(timeout) * time.Second,
 		MaxIdleConnDuration: 60 * time.Second,
+		Dial: fasthttpDialProxy("http://" + webshareUser + ":" + websharePass + "@p.webshare.io:80"),
 	}
 
 	if err := fasthttp.ListenAndServe(":" + port, h); err != nil {
@@ -84,5 +89,12 @@ func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
         return makeRequest(ctx, attempt + 1)
     } else {
 		return resp
+	}
+}
+
+// Helper function to set up proxy dialing
+func fasthttpDialProxy(proxyAddr string) fasthttp.DialFunc {
+	return func(addr string) (fasthttp.DialFunc, error) {
+		return fasthttp.Dial(proxyAddr)(addr)
 	}
 }
