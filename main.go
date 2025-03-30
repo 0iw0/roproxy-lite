@@ -104,6 +104,6 @@ func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
 // Helper function to set up proxy dialing
 func fasthttpDialProxy(proxyAddr string) fasthttp.DialFunc {
 	return func(addr string) (net.Conn, error) {
-		return fasthttp.Dial(proxyAddr)
+		return fasthttp.Dial("http://mpkvgwjp-rotate:65sm7wqm7kr3@p.webshare.io:80")
 	}
 }
