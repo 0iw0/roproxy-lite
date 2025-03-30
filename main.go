@@ -28,7 +28,7 @@ func main() {
 	// Create a new client with proper proxy configuration
 	client = &fasthttp.Client{
 		ReadTimeout:         time.Duration(timeout) * time.Second,
-		MaxIdleConnDuration: 60 * time.Second,
+		MaxIdleConnDuration: 0, // 60 * time.Second,
 		Dial:                fasthttpproxy.FasthttpHTTPDialerTimeout(proxyURL, time.Duration(timeout)*time.Second),
 	}
 
