@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -19,7 +18,7 @@ var port = os.Getenv("PORT")
 // Webshare Proxy Credentials
 var webshareUser = os.Getenv("WEBSHARE_USER")
 var websharePass = os.Getenv("WEBSHARE_PASS")
-var proxyURL = "http://" + webshareUser + ":" + websharePass + "@p.webshare.io"
+var proxyURL = "http://" + webshareUser + ":" + websharePass + "@p.webshare.io:80"
 
 var client *fasthttp.Client
 
@@ -79,9 +78,7 @@ func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
 	}
 	log.Printf("11: %s", time.Since(startTime))
 	// Reset the Dial function to force a new proxy connection
-	fullProxyUrl := proxyURL + ":" + strconv.Itoa(9999+rand.Intn(20000))
-	log.Printf("fullProxyUrl: %s", fullProxyUrl)
-	client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(fullProxyUrl, time.Duration(timeout)*time.Second)
+	client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxyURL, time.Duration(timeout)*time.Second)
 	log.Printf("12: %s", time.Since(startTime))
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
