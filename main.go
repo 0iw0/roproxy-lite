@@ -28,7 +28,7 @@ func main() {
 	// Create a new client with proper proxy configuration
 	client = &fasthttp.Client{
 		ReadTimeout:         time.Duration(timeout) * time.Second,
-		MaxIdleConnDuration: 0, // 60 * time.Second,
+		MaxIdleConnDuration: 60 * time.Second,
 		Dial:                fasthttpproxy.FasthttpHTTPDialerTimeout(proxyURL, time.Duration(timeout)*time.Second),
 	}
 
@@ -72,16 +72,13 @@ func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
 		return resp
 	}
 
+	// Reset the Dial function to force a new proxy connection
+	client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxyURL, time.Duration(timeout)*time.Second)
+
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
-
-	// Test URL to show the proxy IP
 	req.SetRequestURI("https://api64.ipify.org?format=json")
 	req.Header.SetMethod("GET")
-
-	// Remove all headers that might interfere
-	req.Header.Del("Connection")
-	req.Header.Del("Proxy-Connection")
 	req.Header.Set("User-Agent", "RoProxy")
 
 	resp := fasthttp.AcquireResponse()
