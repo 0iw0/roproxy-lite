@@ -63,32 +63,33 @@ func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
 		return resp
 	}
 
-	// Create a new client for each request to ensure IP rotation
+	// Create a new client with proper proxy configuration
 	client := &fasthttp.Client{
 		ReadTimeout:         time.Duration(timeout) * time.Second,
 		MaxIdleConnDuration: 60 * time.Second,
-		Dial:                fasthttpproxy.FasthttpHTTPDialer(proxyURL),
+		Dial:                fasthttpproxy.FasthttpHTTPDialerTimeout(proxyURL, time.Duration(timeout)*time.Second),
 	}
 
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
-	req.Header.SetMethod(string(ctx.Method()))
-	// url := strings.SplitN(string(ctx.Request.Header.RequestURI())[1:], "/", 2)
-	// req.SetRequestURI("https://" + url[0] + ".roblox.com/" + url[1])
+
+	// Test URL to show the proxy IP
 	req.SetRequestURI("https://api64.ipify.org?format=json")
-	req.SetBody(ctx.Request.Body())
-	ctx.Request.Header.VisitAll(func(key, value []byte) {
-		req.Header.Set(string(key), string(value))
-	})
+	req.Header.SetMethod("GET")
+
+	// Remove all headers that might interfere
+	req.Header.Del("Connection")
+	req.Header.Del("Proxy-Connection")
 	req.Header.Set("User-Agent", "RoProxy")
-	req.Header.Del("Roblox-Id")
+
 	resp := fasthttp.AcquireResponse()
 
 	err := client.Do(req, resp)
-
 	if err != nil {
+		log.Printf("Proxy error (attempt %d): %v", attempt, err)
 		fasthttp.ReleaseResponse(resp)
 		return makeRequest(ctx, attempt+1)
 	}
+
 	return resp
 }
