@@ -21,8 +21,16 @@ var proxyURL = "http://" + webshareUser + ":" + websharePass + "@p.webshare.io:8
 
 var startTime = time.Now()
 
+var client *fasthttp.Client
+
 func main() {
 	h := requestHandler
+
+	client = &fasthttp.Client{
+		ReadTimeout:         time.Duration(timeout) * time.Second,
+		MaxIdleConnDuration: 60 * time.Second,
+		// Dial:                fasthttpproxy.FasthttpHTTPDialerTimeout(proxyURL, time.Duration(timeout)*time.Second),
+	}
 
 	if err := fasthttp.ListenAndServe(":"+port, h); err != nil {
 		log.Fatalf("Error in ListenAndServe: %s", err)
@@ -68,11 +76,6 @@ func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
 	}
 	log.Printf("11: %s", time.Since(startTime))
 	// Create a new client with proper proxy configuration
-	client := &fasthttp.Client{
-		ReadTimeout:         time.Duration(timeout) * time.Second,
-		MaxIdleConnDuration: 60 * time.Second,
-		// Dial:                fasthttpproxy.FasthttpHTTPDialerTimeout(proxyURL, time.Duration(timeout)*time.Second),
-	}
 
 	log.Printf("12: %s", time.Since(startTime))
 	req := fasthttp.AcquireRequest()
