@@ -23,6 +23,8 @@ var proxyURL = "http://" + webshareUser + ":" + websharePass + "@p.webshare.io"
 
 var client *fasthttp.Client
 
+var startTime = time.Now()
+
 func main() {
 	h := requestHandler
 
@@ -39,7 +41,7 @@ func main() {
 }
 
 func requestHandler(ctx *fasthttp.RequestCtx) {
-	start := time.Now()
+	startTime = time.Now()
 	val, ok := os.LookupEnv("KEY")
 
 	if ok && string(ctx.Request.Header.Peek("PROXYKEY")) != val {
@@ -53,11 +55,11 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetBody([]byte("URL format invalid."))
 		return
 	}
-	log.Printf("1: %s", time.Since(start))
+	log.Printf("1: %s", time.Since(startTime))
 	response := makeRequest(ctx, 1)
-	log.Printf("2: %s", time.Since(start))
+	log.Printf("2: %s", time.Since(startTime))
 	defer fasthttp.ReleaseResponse(response)
-	log.Printf("3: %s", time.Since(start))
+	log.Printf("3: %s", time.Since(startTime))
 	body := response.Body()
 	ctx.SetBody(body)
 	ctx.SetStatusCode(response.StatusCode())
@@ -65,7 +67,7 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 		ctx.Response.Header.Set(string(key), string(value))
 	})
 
-	log.Printf("4: %s", time.Since(start))
+	log.Printf("4: %s", time.Since(startTime))
 }
 
 func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
@@ -75,24 +77,24 @@ func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
 		resp.SetStatusCode(500)
 		return resp
 	}
-
+	log.Printf("11: %s", time.Since(startTime))
 	// Reset the Dial function to force a new proxy connection
 	client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxyURL+":"+strconv.Itoa(9999+rand.Intn(20000)), time.Duration(timeout)*time.Second)
-
+	log.Printf("12: %s", time.Since(startTime))
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
 	req.SetRequestURI("https://api64.ipify.org?format=json")
 	req.Header.SetMethod("GET")
 	req.Header.Set("User-Agent", "RoProxy")
-
+	log.Printf("13: %s", time.Since(startTime))
 	resp := fasthttp.AcquireResponse()
-
+	log.Printf("14: %s", time.Since(startTime))
 	err := client.Do(req, resp)
 	if err != nil {
 		log.Printf("Proxy error (attempt %d): %v", attempt, err)
 		fasthttp.ReleaseResponse(resp)
 		return makeRequest(ctx, attempt+1)
 	}
-
+	log.Printf("15: %s", time.Since(startTime))
 	return resp
 }
