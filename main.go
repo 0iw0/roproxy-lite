@@ -67,29 +67,36 @@ func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
 		resp := fasthttp.AcquireResponse()
 		resp.SetBody([]byte("Proxy failed to connect. Please try again."))
 		resp.SetStatusCode(500)
-
 		return resp
 	}
 
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
-	req.Header.SetMethod(string(ctx.Method()))
+
 	url := strings.SplitN(string(ctx.Request.Header.RequestURI())[1:], "/", 2)
 	req.SetRequestURI("https://" + url[0] + ".roblox.com/" + url[1])
+
 	req.SetBody(ctx.Request.Body())
 	ctx.Request.Header.VisitAll(func(key, value []byte) {
 		req.Header.Set(string(key), string(value))
 	})
+
 	req.Header.Set("User-Agent", "RoProxy")
 	req.Header.Del("Roblox-Id")
-	resp := fasthttp.AcquireResponse()
 
+	// Log request details
+	log.Printf("Making request to %s", req.URI())
+
+	resp := fasthttp.AcquireResponse()
 	err := client.Do(req, resp)
 
+	// Log the response or error
 	if err != nil {
+		log.Printf("Error on attempt %d: %v", attempt, err)
 		fasthttp.ReleaseResponse(resp)
 		return makeRequest(ctx, attempt+1)
 	} else {
+		log.Printf("Request to %s succeeded with status %d", req.URI(), resp.StatusCode())
 		return resp
 	}
 }
