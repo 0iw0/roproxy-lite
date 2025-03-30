@@ -19,7 +19,7 @@ var port = os.Getenv("PORT")
 // Webshare Proxy Credentials
 var webshareUser = os.Getenv("WEBSHARE_USER")
 var websharePass = os.Getenv("WEBSHARE_PASS")
-var proxyURL = "http://" + webshareUser + ":" + websharePass + "@p.webshare.io:80"
+var proxyURL = "http://" + webshareUser + ":" + websharePass + "@p.webshare.io"
 
 var client *fasthttp.Client
 
@@ -39,6 +39,7 @@ func main() {
 }
 
 func requestHandler(ctx *fasthttp.RequestCtx) {
+	start := time.Now()
 	val, ok := os.LookupEnv("KEY")
 
 	if ok && string(ctx.Request.Header.Peek("PROXYKEY")) != val {
@@ -52,17 +53,19 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetBody([]byte("URL format invalid."))
 		return
 	}
-
+	log.Printf("1: %s", time.Since(start))
 	response := makeRequest(ctx, 1)
-
+	log.Printf("2: %s", time.Since(start))
 	defer fasthttp.ReleaseResponse(response)
-
+	log.Printf("3: %s", time.Since(start))
 	body := response.Body()
 	ctx.SetBody(body)
 	ctx.SetStatusCode(response.StatusCode())
 	response.Header.VisitAll(func(key, value []byte) {
 		ctx.Response.Header.Set(string(key), string(value))
 	})
+
+	log.Printf("4: %s", time.Since(start))
 }
 
 func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
@@ -74,7 +77,7 @@ func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
 	}
 
 	// Reset the Dial function to force a new proxy connection
-	client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxyURL+"?session="+strconv.Itoa(9999+rand.Intn(20000)), time.Duration(timeout)*time.Second)
+	client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxyURL+":"+strconv.Itoa(9999+rand.Intn(20000)), time.Duration(timeout)*time.Second)
 
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
