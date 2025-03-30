@@ -18,17 +18,10 @@ var port = os.Getenv("PORT")
 // Webshare Proxy Credentials
 var webshareUser = os.Getenv("WEBSHARE_USER")
 var websharePass = os.Getenv("WEBSHARE_PASS")
-
-var client *fasthttp.Client
+var proxyURL = "http://" + webshareUser + ":" + websharePass + "@p.webshare.io:80"
 
 func main() {
 	h := requestHandler
-
-	client = &fasthttp.Client{
-		ReadTimeout:         time.Duration(timeout) * time.Second,
-		MaxIdleConnDuration: 60 * time.Second,
-		Dial:                fasthttpproxy.FasthttpHTTPDialer("http://" + webshareUser + ":" + websharePass + "@p.webshare.io:80"),
-	}
 
 	if err := fasthttp.ListenAndServe(":"+port, h); err != nil {
 		log.Fatalf("Error in ListenAndServe: %s", err)
@@ -67,8 +60,14 @@ func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
 		resp := fasthttp.AcquireResponse()
 		resp.SetBody([]byte("Proxy failed to connect. Please try again."))
 		resp.SetStatusCode(500)
-
 		return resp
+	}
+
+	// Create a new client for each request to ensure IP rotation
+	client := &fasthttp.Client{
+		ReadTimeout:         time.Duration(timeout) * time.Second,
+		MaxIdleConnDuration: 60 * time.Second,
+		Dial:                fasthttpproxy.FasthttpHTTPDialer(proxyURL),
 	}
 
 	req := fasthttp.AcquireRequest()
@@ -90,7 +89,6 @@ func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
 	if err != nil {
 		fasthttp.ReleaseResponse(resp)
 		return makeRequest(ctx, attempt+1)
-	} else {
-		return resp
 	}
+	return resp
 }
