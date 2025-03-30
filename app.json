@@ -7,6 +7,14 @@
             "description": "The key used to access proxy.",
             "generator": "secret"
         },
+        "WEBSHARE_USER": {
+            "description": "The Webshare proxy username.",
+            "generator": "secret"
+        },
+        "WEBSHARE_PASS": {
+            "description": "The Webshare proxy password.",
+            "generator": "secret"
+        },
         "TIMEOUT": {
             "description": "The number of seconds before a request times out and is retried.",
             "value": "5"
