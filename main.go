@@ -79,7 +79,9 @@ func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
 	}
 	log.Printf("11: %s", time.Since(startTime))
 	// Reset the Dial function to force a new proxy connection
-	client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxyURL+":"+strconv.Itoa(9999+rand.Intn(20000)), time.Duration(timeout)*time.Second)
+	fullProxyUrl := proxyURL + ":" + strconv.Itoa(9999+rand.Intn(20000))
+	log.Printf("fullProxyUrl: %s", fullProxyUrl)
+	client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(fullProxyUrl, time.Duration(timeout)*time.Second)
 	log.Printf("12: %s", time.Since(startTime))
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
