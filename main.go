@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/valyala/fasthttp"
-	"github.com/valyala/fasthttp/fasthttpproxy"
 )
 
 var timeout, _ = strconv.Atoi(os.Getenv("TIMEOUT"))
@@ -72,7 +71,7 @@ func makeRequest(ctx *fasthttp.RequestCtx, attempt int) *fasthttp.Response {
 	client := &fasthttp.Client{
 		ReadTimeout:         time.Duration(timeout) * time.Second,
 		MaxIdleConnDuration: 60 * time.Second,
-		Dial:                fasthttpproxy.FasthttpHTTPDialerTimeout(proxyURL, time.Duration(timeout)*time.Second),
+		// Dial:                fasthttpproxy.FasthttpHTTPDialerTimeout(proxyURL, time.Duration(timeout)*time.Second),
 	}
 
 	log.Printf("12: %s", time.Since(startTime))
